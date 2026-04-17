@@ -93,17 +93,17 @@ class MoveLogic:
         return all_moves
 
 ########################################################################################################################
-    def get_all_player_capture_moves(self, player):
+    def get_all_player_capture_moves(self, player): # Fixed bug hvor logik looper
         all_moves = []
 
-    for row in range(8):
-        for col in range(8):
-            piece = self.board[row][col]
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
 
-            if self.get_piece_owner(piece) == player:
-                capture_moves = self.get_capture_moves(row, col)
+                if self.get_piece_owner(piece) == player:
+                    capture_moves = self.get_capture_moves(row, col)
 
-                for move in capture_moves:
-                    all_moves.append(((row, col), move))
+                    for move in capture_moves:
+                        all_moves.append(((row, col), move))
 
-    return all_moves
+        return all_moves
