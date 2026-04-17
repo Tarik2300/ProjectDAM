@@ -1,41 +1,100 @@
 from game import Game
-from moves import MoveLogic
+from ai import AI
 
 game = Game()
+ai = AI(2, 3)   # AI spiller som spiller 2 og søger 3 niveauer dybt
 
 
-game.board = [
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 2, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0]
-]
+def print_board_pretty(board):
+    print("   0 1 2 3 4 5 6 7")
 
-game.move_logic = MoveLogic(game.board)
+    for row_index in range(8):
+        print(str(row_index) + "  ", end="")
 
-print("Før første capture:")
-game.print_board()
-print("Current player:", game.current_player)
-print("Valid moves:", game.get_valid_moves_for_player())
+        for col_index in range(8):
+            piece = board[row_index][col_index]
 
-game.make_move(5, 0, 3, 2)
+            if piece == 0:
+                symbol = "."
+            elif piece == 1:
+                symbol = "x"
+            elif piece == 2:
+                symbol = "o"
+            elif piece == 3:
+                symbol = "X"
+            elif piece == 4:
+                symbol = "O"
 
-print("\nEfter første capture:")
-game.print_board()
-print("Current player:", game.current_player)
-print("must_continue_from:", game.must_continue_from)
-print("Valid moves:", game.get_valid_moves_for_player())
+            print(symbol, end=" ")
 
-game.make_move(3, 2, 1, 4)
+        print()
 
-print("\nEfter andet capture:")
-game.print_board()
-print("Current player:", game.current_player)
-print("must_continue_from:", game.must_continue_from)
 
-winner = game.check_winner()
-print("Vinder:", winner)
+def print_moves(moves):
+    for i in range(len(moves)):
+        start_pos, end_pos = moves[i]
+        print(str(i) + ": " + str(start_pos) + " -> " + str(end_pos))
+
+
+# Hovedloop - kører indtil der findes en vinder eller ingen gyldige moves
+while True:
+    print()
+    print_board_pretty(game.board)
+    print()
+
+    winner = game.check_winner()   # tjek om spillet er slut
+    if winner is not None:
+        print("Vinder:", winner)
+        break
+
+    if game.current_player == 1:
+        print("Spiller 1 tur")
+        print("x = dig, o = AI")
+        print("X = din konge, O = AI konge")
+        print()
+
+        moves = game.get_valid_moves_for_player()
+
+        if len(moves) == 0:
+            print("Ingen gyldige moves")
+            break
+
+        print("Gyldige moves:")
+        print_moves(moves)
+
+        # Bliver ved med at spørge indtil spilleren vælger et gyldigt move
+        while True:
+            try:
+                choice = int(input("Vælg move nummer: "))
+
+                if choice >= 0 and choice < len(moves):
+                    break
+                else:
+                    print("Ugyldigt nummer. Prøv igen.")
+
+            except:
+                print("Skriv et tal.")
+
+        selected_move = moves[choice]
+
+        start_pos, end_pos = selected_move
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+
+        game.make_move(start_row, start_col, end_row, end_col)
+
+    else:
+        print("AI tænker...")
+        best_move = ai.get_best_move(game)
+
+        if best_move is None:
+            print("AI kunne ikke finde et move")
+            break
+
+        print("AI valgte:", best_move)
+
+        start_pos, end_pos = best_move
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+
+        game.make_move(start_row, start_col, end_row, end_col)
