@@ -76,7 +76,7 @@ class MoveLogic:
 
         return moves
 
-
+########################################################################################################################
     def get_all_player_simple_moves(self, player):
         all_moves = []
 
@@ -92,6 +92,7 @@ class MoveLogic:
 
         return all_moves
 
+########################################################################################################################
     def get_all_player_capture_moves(self, player):
         all_moves = []
 
