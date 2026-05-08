@@ -14,14 +14,19 @@ class AI:
 
         for row in game.board:
             for piece in row:
-                if piece == 1:
-                    score -= 1
-                elif piece == 2:
-                    score += 1
-                elif piece == 3:
-                    score -= 2
-                elif piece == 4:
-                    score += 2
+                piece_owner = game.move_logic.get_piece_owner(piece)
+
+                if piece == 3 or piece == 4:
+                    value = 2
+                elif piece == 1 or piece == 2:
+                    value = 1
+                else:
+                    value = 0
+
+                if piece_owner == self.player:
+                    score += value
+                elif piece_owner != 0:
+                    score -= value
 
         return score
 
@@ -43,9 +48,9 @@ class AI:
     def minimax(self, game, depth, alpha, beta, maximizing):
         winner = game.check_winner()
 
-        if winner == 2:
+        if winner == self.player:
             return 1000, None
-        elif winner == 1:
+        elif winner is not None and winner != "Uafgjort":
             return -1000, None
         elif winner == "Uafgjort":
             return 0, None
