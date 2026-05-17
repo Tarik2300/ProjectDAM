@@ -14,7 +14,7 @@ class Game:
         self.draw_reason = ""
 
         self.REPETITION_DRAW_LIMIT = 3
-        self.no_capture_draw_limit = 80
+        self.no_capture_draw_limit = 1
         #No capture draw limit er "halv-træk" så det skal ses som 40 træk uden
         #capture før at der kan vælges draw, ikke 80.
 

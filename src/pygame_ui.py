@@ -89,9 +89,9 @@ class PygameUI:
 
         self.draw_button = pygame.Rect(
             self.BOARD_OFFSET_X + self.BOARD_SIZE + 25,
-            560,
+            545,
             220,
-            48
+            45
         )
 
     ####################################################################################################################
@@ -701,10 +701,24 @@ class PygameUI:
         if not self.game.can_claim_draw():
             return
 
+        panel_x = self.BOARD_OFFSET_X + self.BOARD_SIZE
+
+        button_x = panel_x + 25
+        button_y = 595
+        button_width = 220
+        button_height = 42
+
+        self.draw_button = pygame.Rect(
+            button_x,
+            button_y,
+            button_width,
+            button_height
+        )
+
         pygame.draw.rect(
             self.screen,
             self.BLACK,
-            self.draw_button.inflate(6,6)
+            self.draw_button.inflate(6, 6)
         )
 
         pygame.draw.rect(
@@ -713,22 +727,25 @@ class PygameUI:
             self.draw_button
         )
 
-        button_text = self.normal.font.render("CLAIM DRAW", False, self.BLACK)
-        button_rect = button_text.get_rect()
-        self.sreen.blit(button_text, button_rect)
+        button_text = self.normal_font.render("CLAIM DRAW", False, self.BLACK)
+        button_rect = button_text.get_rect(center=self.draw_button.center)
+        self.screen.blit(button_text, button_rect)
+
+        reason_title = self.small_font.render("DRAW MULIGT", False, self.YELLOW)
+        self.screen.blit(reason_title, (button_x, button_y - 45))
 
         reason = self.game.draw_reason
 
         if reason != "":
-            wrapped_lines = self.wrap_text(reason, 220)
+            short_reason = reason
 
-            y = self.draw_button.y + 60
+            if reason == "Der er gået for mange træk uden slag":
+                short_reason = "Mange træk uden slag"
+            elif reason == "Samme position er opstået 3 gange":
+                short_reason = "Position gentaget 3x"
 
-            for line in wrapped_lines:
-                line_surface = self.small_font.render(line, False, self.WHITE)
-                self.screen.blit(line_surface, (self.draw_button.x, y))
-                y += 20
-
+            reason_surface = self.small_font.render(short_reason, False, self.WHITE)
+            self.screen.blit(reason_surface, (button_x, button_y - 22))
 
 ########################################################################################################################
     # Sidepanel
@@ -827,7 +844,7 @@ class PygameUI:
 ########################################################################################################################
 
     def draw_help_text(self, panel_x):
-        y = 410
+        y = 395
 
         title = self.large_font.render("KONTROL", False, self.WHITE)
         self.screen.blit(title, (panel_x + 25, y))
@@ -835,19 +852,18 @@ class PygameUI:
         help_lines = [
             "Klik brik",
             "Klik grønt felt",
-            "R   = genstart",
+            "R = genstart",
             "ESC = luk",
-            "",
             "Sort starter",
             "K = konge"
         ]
 
-        y += 38
+        y += 35
 
         for line in help_lines:
             text_surface = self.small_font.render(line, False, self.WHITE)
             self.screen.blit(text_surface, (panel_x + 25, y))
-            y += 23
+            y += 21
 
 ########################################################################################################################
 
