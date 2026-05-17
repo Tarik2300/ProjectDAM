@@ -87,6 +87,13 @@ class PygameUI:
             70
         )
 
+        self.draw_button = pygame.Rect(
+            self.BOARD_OFFSET_X + self.BOARD_SIZE + 25,
+            545,
+            220,
+            45
+        )
+
     ####################################################################################################################
     # Hovedloop
     ####################################################################################################################
@@ -202,16 +209,21 @@ class PygameUI:
         subtitle_rect = subtitle_surface.get_rect(center=(rect.centerx, rect.centery + 16))
         self.screen.blit(subtitle_surface, subtitle_rect)
 
-    ####################################################################################################################
+########################################################################################################################
     # Input
-    ####################################################################################################################
+########################################################################################################################
 
     def handle_mouse_click(self, mouse_pos):
         if self.game_over:
             return
 
+        if self.game.can_claim_draw() and self.draw_button.collidepoint(mouse_pos):
+            self.end_game("Uafgjort")
+            return
+
         if self.game.current_player != self.human_player:
             return
+
 
         self.auto_select_forced_piece()
 
@@ -260,6 +272,8 @@ class PygameUI:
             else:
                 self.message = "Ugyldigt træk"
 
+########################################################################################################################
+
     def get_display_position(self, row, col):
         """
         Oversætter intern board-position til visuel position.
@@ -276,6 +290,8 @@ class PygameUI:
             display_col = col
 
         return display_row, display_col
+
+########################################################################################################################
 
     def get_board_position_from_mouse(self, mouse_pos):
         """
@@ -310,6 +326,8 @@ class PygameUI:
 
         return row, col
 
+########################################################################################################################
+
     def select_piece(self, row, col):
         piece = self.game.board[row][col]
 
@@ -336,6 +354,8 @@ class PygameUI:
         self.update_valid_moves_for_selected_piece()
         self.message = "Vælg et grønt felt"
 
+########################################################################################################################
+
     def update_valid_moves_for_selected_piece(self):
         self.valid_moves = []
 
@@ -351,9 +371,9 @@ class PygameUI:
             if start_pos == (selected_row, selected_col):
                 self.valid_moves.append(end_pos)
 
-    ####################################################################################################################
+########################################################################################################################
     # Tvungen slagmarkering
-    ####################################################################################################################
+########################################################################################################################
 
     def auto_select_forced_piece(self):
         """
@@ -403,9 +423,9 @@ class PygameUI:
             self.update_valid_moves_for_selected_piece()
             self.message = "Tvunget slag - brug markeret brik"
 
-    ####################################################################################################################
+########################################################################################################################
     # AI
-    ####################################################################################################################
+########################################################################################################################
 
     def make_ai_move(self):
         if self.game_over:
@@ -446,9 +466,9 @@ class PygameUI:
         self.message = "Din tur"
         self.auto_select_forced_piece()
 
-    ####################################################################################################################
+########################################################################################################################
     # Tegning
-    ####################################################################################################################
+########################################################################################################################
 
     def draw(self):
         self.screen.fill(self.BACKGROUND)
@@ -460,6 +480,8 @@ class PygameUI:
         self.draw_side_panel()
 
         pygame.display.update()
+
+########################################################################################################################
 
     def draw_board(self):
         for row in range(8):
@@ -486,6 +508,8 @@ class PygameUI:
                     (x, y, self.SQUARE_SIZE, self.SQUARE_SIZE),
                     2
                 )
+
+########################################################################################################################
 
     def draw_coordinates(self):
         letters = ["a", "b", "c", "d", "e", "f", "g", "h"]
@@ -524,6 +548,8 @@ class PygameUI:
             y = self.BOARD_OFFSET_Y + display_row * self.SQUARE_SIZE + self.SQUARE_SIZE // 2 - text_rect.height // 2
 
             self.screen.blit(text, (x, y))
+
+########################################################################################################################
 
     def draw_highlights(self):
         # Marker valgt/tvungen brik
@@ -568,6 +594,8 @@ class PygameUI:
                 3
             )
 
+########################################################################################################################
+
     def draw_pieces(self):
         for row in range(8):
             for col in range(8):
@@ -575,6 +603,8 @@ class PygameUI:
 
                 if piece != 0:
                     self.draw_piece(row, col, piece)
+
+########################################################################################################################
 
     def draw_piece(self, row, col, piece):
         display_row, display_col = self.get_display_position(row, col)
@@ -665,9 +695,61 @@ class PygameUI:
             )
             self.screen.blit(king_text, king_rect)
 
-    ####################################################################################################################
+########################################################################################################################
+
+    def draw_claim_draw_button(self):
+        if not self.game.can_claim_draw():
+            return
+
+        panel_x = self.BOARD_OFFSET_X + self.BOARD_SIZE
+
+        button_x = panel_x + 25
+        button_y = 595
+        button_width = 220
+        button_height = 42
+
+        self.draw_button = pygame.Rect(
+            button_x,
+            button_y,
+            button_width,
+            button_height
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            self.BLACK,
+            self.draw_button.inflate(6, 6)
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            self.YELLOW,
+            self.draw_button
+        )
+
+        button_text = self.normal_font.render("CLAIM DRAW", False, self.BLACK)
+        button_rect = button_text.get_rect(center=self.draw_button.center)
+        self.screen.blit(button_text, button_rect)
+
+        reason_title = self.small_font.render("DRAW MULIGT", False, self.YELLOW)
+        self.screen.blit(reason_title, (button_x, button_y - 45))
+
+        reason = self.game.draw_reason
+
+        if reason != "":
+            short_reason = reason
+
+            if reason == "Der er gået for mange træk uden slag":
+                short_reason = "Mange træk uden slag"
+            elif reason == "Samme position er opstået 3 gange":
+                short_reason = "Position gentaget 3x"
+
+            reason_surface = self.small_font.render(short_reason, False, self.WHITE)
+            self.screen.blit(reason_surface, (button_x, button_y - 22))
+
+########################################################################################################################
     # Sidepanel
-    ####################################################################################################################
+########################################################################################################################
 
     def draw_side_panel(self):
         panel_x = self.BOARD_OFFSET_X + self.BOARD_SIZE
@@ -694,9 +776,12 @@ class PygameUI:
         self.draw_turn_info(panel_x)
         self.draw_piece_count(panel_x)
         self.draw_help_text(panel_x)
+        self.draw_claim_draw_button()
 
         if self.game_over:
             self.draw_game_over(panel_x)
+
+########################################################################################################################
 
     def draw_turn_info(self, panel_x):
         y = 135
@@ -724,6 +809,8 @@ class PygameUI:
             line_surface = self.small_font.render(line, False, self.WHITE)
             self.screen.blit(line_surface, (panel_x + 25, y))
             y += 22
+
+########################################################################################################################
 
     def draw_piece_count(self, panel_x):
         y = 270
@@ -754,8 +841,10 @@ class PygameUI:
         player_surface = self.small_font.render(player_text, False, self.YELLOW)
         self.screen.blit(player_surface, (panel_x + 25, y))
 
+########################################################################################################################
+
     def draw_help_text(self, panel_x):
-        y = 410
+        y = 395
 
         title = self.large_font.render("KONTROL", False, self.WHITE)
         self.screen.blit(title, (panel_x + 25, y))
@@ -763,19 +852,20 @@ class PygameUI:
         help_lines = [
             "Klik brik",
             "Klik grønt felt",
-            "R   = genstart",
+            "R = genstart",
             "ESC = luk",
-            "",
             "Sort starter",
             "K = konge"
         ]
 
-        y += 38
+        y += 35
 
         for line in help_lines:
             text_surface = self.small_font.render(line, False, self.WHITE)
             self.screen.blit(text_surface, (panel_x + 25, y))
-            y += 23
+            y += 21
+
+########################################################################################################################
 
     def draw_game_over(self, panel_x):
         y = 610
@@ -795,9 +885,9 @@ class PygameUI:
         restart_surface = self.small_font.render("Tryk R for nyt spil", False, self.WHITE)
         self.screen.blit(restart_surface, (panel_x + 25, y + 35))
 
-    ####################################################################################################################
+########################################################################################################################
     # Hjælpemetoder
-    ####################################################################################################################
+########################################################################################################################
 
     def wrap_text(self, text, max_width):
         words = text.split(" ")
@@ -820,6 +910,8 @@ class PygameUI:
 
         return lines
 
+########################################################################################################################
+
     def end_game(self, winner):
         self.game_over = True
         self.winner = winner
@@ -830,6 +922,8 @@ class PygameUI:
             self.message = "Du har vundet"
         elif winner == self.ai_player:
             self.message = "AI har vundet"
+
+########################################################################################################################
 
     def restart_game(self):
         self.game = Game()

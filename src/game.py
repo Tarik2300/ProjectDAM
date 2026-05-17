@@ -7,6 +7,17 @@ class Game:
         self.move_logic = MoveLogic(self.board)
         self.must_continue_from = None
 
+        #Draw regler
+        self.position_history = {}
+        self.moves_without_capture = 0
+        self.draw_available = False
+        self.draw_reason = ""
+
+        self.REPETITION_DRAW_LIMIT = 3
+        self.no_capture_draw_limit = 1
+        #No capture draw limit er "halv-træk" så det skal ses som 40 træk uden
+        #capture før at der kan vælges draw, ikke 80.
+
 
     #Selve boardet er på en række lister
     #tallet "1" er den ene spillers brikker og 2 er modstanderens.
@@ -138,7 +149,82 @@ class Game:
 
             if len(more_captures) > 0:
                 self.must_continue_from = (end_row, end_col)
+
+                self.update_draw_rules_after_move(was_capture)
+
                 return True
 
+        self.must_continue_from = None
         self.switch_turn()
+
+        self.update_draw_rules_after_move(was_capture)
+
         return True
+
+########################################################################################################################
+
+    def get_board_state_key(self):
+        """
+        Laver en unik nøgle for den nuværende game state.
+
+        Vi gemmer:
+        - Boardet
+        - Hvis tur det er
+        - Om en spiller er tvunget til at fortsætte med samme brik
+
+        På den måde kan vi opdage gentagelser.
+        """
+        board_tuple = tuple(tuple(row) for row in self.board)
+        return (
+            board_tuple,
+            self.current_player,
+            self.must_continue_from
+        )
+
+########################################################################################################################
+
+    def register_current_position(self):
+        """
+        Registrerer den nuværende position i historikken.
+        Hvis samme position opstår nok gange, kan spilleren kræve DRAW.
+        """
+
+        state_key = self.get_board_state_key()
+
+        if state_key not in self.position_history:
+            self.position_history[state_key] = 1
+        else:
+            self.position_history[state_key] += 1
+
+        if self.position_history[state_key] >= self.REPETITION_DRAW_LIMIT:
+            self.draw_available = True
+            self.draw_reason = "Samme position opstået 3 gange"
+
+########################################################################################################################
+
+    def update_draw_rules_after_move(self, was_capture):
+        """
+        Opdaterer draw-reglerne efter hvert træk.
+        """
+
+        if was_capture:
+            self.moves_without_capture = 0
+        else:
+            self.moves_without_capture += 1
+
+        if self.moves_without_capture >= self.no_capture_draw_limit:
+            self.draw_available = True
+            self.draw_reason = "Der er gået for mange træk uden slag"
+
+        self.register_current_position()
+
+########################################################################################################################
+
+    def can_claim_draw(self):
+        return self.draw_available
+
+    def claim_draw(self):
+        if self.draw_available:
+            return "uafgjort"
+
+        return None
